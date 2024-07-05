@@ -38,30 +38,58 @@ document.addEventListener("DOMContentLoaded", function () {
     return text;
   }
 
+  function parseType(text) {
+    const regex = /<([^>]+)>/;
+    const match = text.match(regex);
+    if (match) {
+      const innerClass = match[1];
+      if (classes[innerClass]) {
+        return text.replace(innerClass, createLinkIfClassExists(innerClass));
+      }
+    }
+    return createLinkIfClassExists(text);
+  }
+
+  function escapeHtml(text) {
+    const element = document.createElement("div");
+    element.innerText = text;
+    return element.innerHTML;
+  }
+
   function displayClassDetails(className) {
     const classData = classes[className];
-    let detailsHtml = `<h2>Base Class</h2><p>${createLinkIfClassExists(
-      classData.baseClass
+    let detailsHtml = `<h2>Base Class</h2><p>${parseType(
+      escapeHtml(classData.baseClass)
     )}</p>`;
 
     detailsHtml += "<h2>Properties</h2><table>";
     detailsHtml +=
       "<tr><th>TYPE</th><th>MEMBER</th><th>OFFSET</th><th>NOTE</th></tr>";
     classData.properties.forEach((prop) => {
-      detailsHtml += `<tr><td>${createLinkIfClassExists(prop.type)}</td><td>${
+      detailsHtml += `<tr><td>${parseType(prop.type)}</td><td>${escapeHtml(
         prop.member
-      }</td><td>${prop.offset}</td><td>${prop.note}</td></tr>`;
+      )}</td><td>${escapeHtml(prop.offset)}</td><td>${escapeHtml(
+        prop.note
+      )}</td></tr>`;
     });
     detailsHtml += "</table>";
 
     detailsHtml += "<h2>Functions</h2><table>";
     detailsHtml += "<tr><th>TYPE</th><th>MEMBER</th><th>ARGUMENTS</th></tr>";
     classData.functions.forEach((func) => {
-      detailsHtml += `<tr><td>${createLinkIfClassExists(func.type)}</td><td>${
-        func.member
-      }</td><td>${func.arguments}</td></tr>`;
+      detailsHtml += `<tr><td>${parseType(
+        escapeHtml(func.type)
+      )}</td><td>${escapeHtml(func.member)}</td><td>${escapeHtml(
+        func.arguments
+      )}</td></tr>`;
     });
     detailsHtml += "</table>";
+
+    detailsHtml += "<h2>Dependencies</h2><ul>";
+    classData.dependencies.forEach((dep) => {
+      detailsHtml += `<li>${createLinkIfClassExists(escapeHtml(dep))}</li>`;
+    });
+    detailsHtml += "</ul>";
 
     classNameElement.textContent = className;
     classDetails.innerHTML = detailsHtml;
@@ -75,7 +103,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Navigate to a class
   function navigateToClass(className) {
     historyStack.push(classNameElement.textContent);
     displayClassDetails(className);
